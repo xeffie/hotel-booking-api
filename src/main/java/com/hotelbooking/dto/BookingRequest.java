@@ -19,6 +19,8 @@ public class BookingRequest {
         this.numberOfGuests = numberOfGuests;
         this.roomType = roomType;
         this.nights = nights;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
     }
 
     public GuestInfo getGuest() {
