@@ -1,5 +1,6 @@
 package com.hotelbooking.service;
 import com.hotelbooking.dto.*;
+import com.hotelbooking.model.*;
 import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -13,21 +14,26 @@ public class BookingService {
             RoomType.SUITE, 3
     );
     private final Map<RoomType, Integer> bookedRooms = new HashMap<>();
+
     public BookingService() {
         bookedRooms.put(RoomType.SINGLE, 0);
         bookedRooms.put(RoomType.DOUBLE, 0);
         bookedRooms.put(RoomType.SUITE, 0);
-    }public BookingResponse createBooking(BookingRequest request) {
+    }
+
+    public BookingResponse createBooking(BookingRequest request) {
         // --- 1. Kontrollera antal gäster ---
         int maxGuests = switch (request.getRoomType()) {
             case SINGLE -> 1;
             case DOUBLE -> 2;
             case SUITE -> 3;
-        };if (request.getNumberOfGuests() > maxGuests) {
+        };
+        if (request.getNumberOfGuests() > maxGuests) {
             throw new IllegalArgumentException("Too many guests for selected room type");
         }// --- 2. Kontrollera datum ---
         LocalDate checkIn = request.getCheckInDate();
-        LocalDate checkOut = request.getCheckOutDate();if (checkIn == null || checkOut == null || checkIn.isAfter(checkOut) || checkIn.isBefore(LocalDate.now())) {
+        LocalDate checkOut = request.getCheckOutDate();
+        if (checkIn == null || checkOut == null || checkIn.isAfter(checkOut) || checkIn.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Invalid check-in/check-out dates");
         }// --- 3. Kontrollera kapacitet ---
         int currentlyBooked = bookedRooms.get(request.getRoomType());
@@ -38,18 +44,23 @@ public class BookingService {
             case SINGLE -> 1000;
             case DOUBLE -> 1500;
             case SUITE -> 2500;
-        };int nights = (int) (checkOut.toEpochDay() - checkIn.toEpochDay());
+        };
+        int nights = (int) (checkOut.toEpochDay() - checkIn.toEpochDay());
         double totalPrice = pricePerNight * nights;
-        new PriceInfo(pricePerNight, nights, totalPrice, "SEK");
+        PriceInfo priceInfo = new PriceInfo(pricePerNight, nights, totalPrice, "SEK");
 // --- 5. Skapa bokning ---
         String bookingNumber = UUID.randomUUID().toString();
         BookingResponse response = new BookingResponse(bookingNumber, priceInfo, BookingStatus.CONFIRMED);
         bookings.put(bookingNumber, response);
         bookedRooms.put(request.getRoomType(), currentlyBooked + 1);
         return response;
-    }public BookingResponse getBooking(String bookingNumber) {
+    }
+
+    public BookingResponse getBooking(String bookingNumber) {
         BookingResponse response = bookings.get(bookingNumber);
         if (response == null) {
             throw new NoSuchElementException("Booking not found");
-        }return response;
+        }
+        return response;
     }
+}
