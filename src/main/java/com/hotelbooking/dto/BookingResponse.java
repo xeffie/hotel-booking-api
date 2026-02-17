@@ -1,5 +1,7 @@
 package com.hotelbooking.dto;
 
+import com.hotelbooking.model.BookingStatus;
+
 public class BookingResponse {
 
     private String bookingNumber;

@@ -1,5 +1,6 @@
 package com.hotelbooking.service;
 import com.hotelbooking.dto.*;
+import com.hotelbooking.model.*;
 import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;

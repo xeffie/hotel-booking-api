@@ -1,7 +1,5 @@
 package com.hotelbooking.model;
 
-import com.hotelbooking.model.roomType;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,11 +8,11 @@ public class booking {
     private final String guestName;
     private final String guestEmail;
     private final int guests;
-    private final roomType roomType;
+    private final RoomType roomType;
     private final int nights;
     private final Instant createdAt;
 
-    public booking(String guestName, String guestEmail, int guests, roomType roomType, int nights) {
+    public booking(String guestName, String guestEmail, int guests, RoomType roomType, int nights) {
         this.bookingNumber = UUID.randomUUID().toString();
         this.guestName = guestName;
         this.guestEmail = guestEmail;
@@ -28,7 +26,7 @@ public class booking {
     public String getGuestName() { return guestName; }
     public String getGuestEmail() { return guestEmail; }
     public int getGuests() { return guests; }
-    public roomType getRoomType() { return roomType; }
+    public RoomType getRoomType() { return roomType; }
     public int getNights() { return nights; }
     public Instant getCreatedAt() { return createdAt; }
 }

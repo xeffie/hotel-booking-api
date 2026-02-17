@@ -1,4 +1,4 @@
-package com.hotelbooking.dto;
+package com.hotelbooking.model;
 
 public enum BookingStatus {
     CONFIRMED,

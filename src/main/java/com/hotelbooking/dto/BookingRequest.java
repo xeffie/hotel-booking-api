@@ -1,5 +1,7 @@
 package com.hotelbooking.dto;
 
+import com.hotelbooking.model.RoomType;
+
 import java.time.LocalDate;
 
 public class BookingRequest {
