@@ -15,12 +15,12 @@ public class BookingRequest {
 
     public BookingRequest() {}
 
-    public BookingRequest(GuestInfo guest, int numberOfGuests, RoomType roomType, int nights,
+    public BookingRequest(GuestInfo guest, int numberOfGuests, RoomType roomType,
                           LocalDate checkInDate, LocalDate checkOutDate) {
         this.guest = guest;
         this.numberOfGuests = numberOfGuests;
         this.roomType = roomType;
-        this.nights = nights;
+        //this.nights = nights;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
     }
@@ -49,13 +49,9 @@ public class BookingRequest {
         this.roomType = roomType;
     }
 
-    public int getNights() {
-        return nights;
-    }
+    //public int getNights() {return nights;}
 
-    public void setNights(int nights) {
-        this.nights = nights;
-    }
+  //  public void setNights(int nights) {this.nights = nights;}
 
     public LocalDate getCheckInDate() {
         return checkInDate;
