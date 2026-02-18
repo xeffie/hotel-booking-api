@@ -3,8 +3,9 @@ package com.hotelbooking.model;
 import java.time.Instant;
 import java.util.UUID;
 
-public class booking {
+public class Booking {
     private final String bookingNumber; // externt id
+    private final String ownerUsername;
     private final String guestName;
     private final String guestEmail;
     private final int guests;
@@ -12,8 +13,9 @@ public class booking {
     private final int nights;
     private final Instant createdAt;
 
-    public booking(String guestName, String guestEmail, int guests, RoomType roomType, int nights) {
+    public Booking(String ownerUsername, String guestName, String guestEmail, int guests, RoomType roomType, int nights) {
         this.bookingNumber = UUID.randomUUID().toString();
+        this.ownerUsername = ownerUsername;
         this.guestName = guestName;
         this.guestEmail = guestEmail;
         this.guests = guests;
@@ -23,6 +25,7 @@ public class booking {
     }
 
     public String getBookingNumber() { return bookingNumber; }
+    public String getOwnerUsername() { return ownerUsername; }
     public String getGuestName() { return guestName; }
     public String getGuestEmail() { return guestEmail; }
     public int getGuests() { return guests; }

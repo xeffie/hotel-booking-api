@@ -1,17 +1,24 @@
 package com.hotelbooking.service;
 
 import com.hotelbooking.dto.*;
+import com.hotelbooking.exception.BookingNotFoundException;
+import com.hotelbooking.exception.InvalidBookingException;
+import com.hotelbooking.exception.OutOfRoomsException;
 import com.hotelbooking.model.BookingStatus;
 import com.hotelbooking.model.RoomType;
+import com.hotelbooking.model.Booking;
 import com.hotelbooking.repository.BookingRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.UUID;
 
 @Service
 public class BookingService {
@@ -37,14 +44,8 @@ public class BookingService {
     public BookingResponse createBooking(BookingRequest request) {
 
         // 1️⃣ Kontrollera antal gäster
-        int maxGuests = switch (request.getRoomType()) {
-            case SINGLE -> 1;
-            case DOUBLE -> 2;
-            case SUITE -> 3;
-        };
-
-        if (request.getNumberOfGuests() > maxGuests) {
-            throw new IllegalArgumentException("Too many guests for selected room type");
+        if (request.getNumberOfGuests() > request.getRoomType().getMaxGuests()) {
+            throw new InvalidBookingException("Too many guests for selected room type");
         }
 
         // 2️⃣ Kontrollera datum
@@ -53,47 +54,45 @@ public class BookingService {
 
         if (checkIn == null ||
                 checkOut == null ||
-                checkIn.isAfter(checkOut) ||
+                !checkOut.isAfter(checkIn) ||
                 checkIn.isBefore(LocalDate.now())) {
 
-            throw new IllegalArgumentException("Invalid check-in/check-out dates");
+            throw new InvalidBookingException("Invalid check-in/check-out dates");
         }
 
         // 3️⃣ Kontrollera kapacitet
         int currentlyBooked = bookedRooms.get(request.getRoomType());
 
         if (currentlyBooked >= roomCapacity.get(request.getRoomType())) {
-            throw new IllegalArgumentException("No available rooms of this type");
+            throw new OutOfRoomsException("No available rooms of this type");
         }
 
         // 4️⃣ Beräkna pris
-        double pricePerNight = switch (request.getRoomType()) {
-            case SINGLE -> 1000;
-            case DOUBLE -> 1500;
-            case SUITE -> 2500;
-        };
-
         int nights = (int) ChronoUnit.DAYS.between(checkIn, checkOut);
 
-        double totalPrice = pricePerNight * nights;
-
-        PriceInfo priceInfo = new PriceInfo(
-                pricePerNight,
-                nights,
-                totalPrice,
-                "SEK"
-        );
+        PriceInfo priceInfo = buildPriceInfo(request.getRoomType(), nights);
 
         // 5️⃣ Skapa bokning
-        String bookingNumber = UUID.randomUUID().toString();
+        String ownerUsername = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        Booking b = new Booking(
+                ownerUsername,
+                request.getGuest().getName(),
+                request.getGuest().getEmail(),
+                request.getNumberOfGuests(),
+                request.getRoomType(),
+                nights
+        );
+
+        bookingRepository.save(b);
 
         BookingResponse response = new BookingResponse(
-                bookingNumber,
+                b.getBookingNumber(),
                 priceInfo,
                 BookingStatus.CONFIRMED
         );
-
-        bookingRepository.save(bookingNumber, response);
 
         bookedRooms.put(request.getRoomType(), currentlyBooked + 1);
 
@@ -101,8 +100,64 @@ public class BookingService {
     }
 
     public BookingResponse getBooking(String bookingNumber) {
-        return bookingRepository
+        Booking b = bookingRepository
                 .findByBookingNumber(bookingNumber)
-                .orElseThrow(() -> new NoSuchElementException("Booking not found"));
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_ADMIN"));
+
+        if (!isAdmin && !b.getOwnerUsername().equals(currentUser)) {
+            throw new AccessDeniedException("You do not have permission to access this booking");
+        }
+
+        PriceInfo priceInfo = buildPriceInfo(b.getRoomType(), b.getNights());
+
+        return new BookingResponse(
+                b.getBookingNumber(),
+                priceInfo,
+                BookingStatus.CONFIRMED
+        );
+    }
+
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(b -> {
+                    PriceInfo priceInfo = buildPriceInfo(b.getRoomType(), b.getNights());
+                    return new BookingResponse(
+                            b.getBookingNumber(),
+                            priceInfo,
+                            BookingStatus.CONFIRMED
+                    );
+                })
+                .toList();
+    }
+
+    public void deleteBooking(String bookingNumber) {
+        Booking b = bookingRepository.findByBookingNumber(bookingNumber)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        bookingRepository.deleteByBookingNumber(bookingNumber);
+
+        int currentlyBooked = bookedRooms.get(b.getRoomType());
+        bookedRooms.put(b.getRoomType(), Math.max(0, currentlyBooked - 1));
+    }
+
+    private double pricePerNight(RoomType roomType) {
+        return switch (roomType) {
+            case SINGLE -> 1000;
+            case DOUBLE -> 1500;
+            case SUITE -> 2500;
+        };
+    }
+
+    private PriceInfo buildPriceInfo(RoomType roomType, int nights) {
+        double perNight = pricePerNight(roomType);
+        double total = perNight * nights;
+        return new PriceInfo(perNight, nights, total, "SEK");
     }
 }
