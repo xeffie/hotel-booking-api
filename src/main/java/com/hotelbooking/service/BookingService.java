@@ -91,7 +91,14 @@ public class BookingService {
         BookingResponse response = new BookingResponse(
                 b.getBookingNumber(),
                 priceInfo,
-                BookingStatus.CONFIRMED
+                BookingStatus.CONFIRMED,
+                b.getGuestName(),
+                b.getGuestEmail(),
+                b.getGuests(),
+                b.getRoomType().name(),
+                b.getNights(),
+                b.getOwnerUsername(),
+                b.getCreatedAt()
         );
 
         bookedRooms.put(request.getRoomType(), currentlyBooked + 1);
@@ -120,7 +127,14 @@ public class BookingService {
         return new BookingResponse(
                 b.getBookingNumber(),
                 priceInfo,
-                BookingStatus.CONFIRMED
+                BookingStatus.CONFIRMED,
+                b.getGuestName(),
+                b.getGuestEmail(),
+                b.getGuests(),
+                b.getRoomType().name(),
+                b.getNights(),
+                b.getOwnerUsername(),
+                b.getCreatedAt()
         );
     }
 
@@ -131,7 +145,15 @@ public class BookingService {
                     return new BookingResponse(
                             b.getBookingNumber(),
                             priceInfo,
-                            BookingStatus.CONFIRMED
+                            BookingStatus.CONFIRMED,
+                            b.getGuestName(),
+                            b.getGuestEmail(),
+                            b.getGuests(),
+                            b.getRoomType().name(),
+                            b.getNights(),
+                            b.getOwnerUsername(),
+                            b.getCreatedAt()
+
                     );
                 })
                 .toList();
